@@ -76,17 +76,15 @@ int64_t nrow_loaded; // number of loaded rows
  */
 - (IBAction)attach:(id)sender
 {
-  NSAlert *alert = [NSAlert alertWithMessageText:@"Insert PID to attach to:"
-                                   defaultButton:@"Attach"
-                                 alternateButton:@"Cancel"
-                                     otherButton:nil
-                       informativeTextWithFormat:@""];
-  
+  NSAlert *alert = [[NSAlert alloc] init];
+  [alert setMessageText:@"Insert PID to attach to:"];
+  [alert addButtonWithTitle:@"Attach"];
+  [alert addButtonWithTitle:@"Cancel"];
   NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
   [input setStringValue:@""];
   [alert setAccessoryView:input];
   NSInteger button = [alert runModal];
-  if (button == NSAlertDefaultReturn)
+  if (button == NSAlertFirstButtonReturn)
   {
     [input validateEditing];
     pid_t targetPid = [input intValue];
@@ -154,7 +152,7 @@ int64_t nrow_loaded; // number of loaded rows
     free(dumpFilePath);
     free(readbuffer);
   }
-  else if (button == NSAlertAlternateReturn)
+  else if (button == NSAlertSecondButtonReturn)
   {
     /* nothing to do here */
   }
@@ -173,26 +171,24 @@ int64_t nrow_loaded; // number of loaded rows
   [openPanel setCanChooseDirectories:NO];
   [openPanel setCanChooseFiles:YES];
   [openPanel setDelegate:self]; // for filtering files in open panel with shouldShowFilename
-  [openPanel beginSheetModalForWindow:nil
-   completionHandler:^(NSInteger result) 
-   {
-     if (result != NSOKButton) 
-     {
-       return;
-     }
-     [openPanel orderOut:self]; // close panel before we might present an error
-     for (NSURL * url in [openPanel URLs])
-     {
-       [self application:NSApp openFile:[url path]];
-     }
-   }];
+  [openPanel beginSheetModalForWindow:NSApp.modalWindow
+                    completionHandler:^(NSInteger result)
+                    {
+                      if (result != NSFileHandlingPanelOKButton)
+                      {
+                        return;
+                      }
+                      [openPanel orderOut:self]; // close panel before we might present an error
+                      for (NSURL * url in [openPanel URLs])
+                      {
+                        [self application:NSApp openFile:[url path]];
+                      }
+                    }];
 }
 
 //----------------------------------------------------------------------------
-- (BOOL)panel:(id)sender shouldShowFilename:(NSString*)filename
+- (BOOL)panel:(id)sender shouldEnableURL:(NSURL *)url
 {
-  NSURL * url = [NSURL fileURLWithPath:filename];
-
   // can enter directories
   NSNumber * isDirectory = nil;
   [url getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:NULL];
@@ -210,7 +206,7 @@ int64_t nrow_loaded; // number of loaded rows
   }
   
   // check for magic values at front
-  NSFileHandle * fileHandle = [NSFileHandle fileHandleForReadingAtPath:filename];
+  NSFileHandle * fileHandle = [NSFileHandle fileHandleForReadingFromURL:url error:NULL];
   NSData * magicData = [fileHandle readDataOfLength:8];
   [fileHandle closeFile];
   
@@ -288,18 +284,12 @@ int64_t nrow_loaded; // number of loaded rows
   [NSThread detachNewThreadSelector:@selector(printStat) toTarget:self withObject:nil];
 #endif 
   
-  /* default is to not open a file dialogue */
-  if ([[NSUserDefaults standardUserDefaults] objectForKey:@"OpenAtLaunch"] != nil)
-  {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"OpenAtLaunch"] == YES)
-    {
-  // if there is no document yet, then pop up an open file dialogue  
-      // XXX: irrelevant check, no?
+  // if there is no document yet, then pop up an open file dialogue
+  // XXX: irrelevant check, no?
+  // resp: in case of drag and drop file to the MachOView it is relevant
   if ([[[NSDocumentController sharedDocumentController] documents] count] == 0)
   {
     [self openDocument:nil];
-  }
-}
   }
 }
 
@@ -321,21 +311,17 @@ int64_t nrow_loaded; // number of loaded rows
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
 {
   NSLog (@"open file: %@", filename);
-  
-  __autoreleasing NSError *error;
-
   NSDocumentController * documentController = [NSDocumentController sharedDocumentController];
-  MVDocument * document = [documentController openDocumentWithContentsOfURL:[NSURL fileURLWithPath:filename]
-                                                                    display:YES 
-                                                                      error:&error];
-
-  // If we can't open the document, present error to the user
-  if (!document) 
-  {
-    [NSApp presentError:error];
-    return NO;
-  }
   
+  [documentController openDocumentWithContentsOfURL:[NSURL fileURLWithPath:filename]
+                                            display:YES
+                                  completionHandler:^(NSDocument * _Nullable document, BOOL documentWasAlreadyOpen, NSError * _Nullable error)
+                                  {
+                                    if (!document)
+                                    {
+                                      [NSApp presentError:error];
+                                    }
+                                  }];
   return YES;
 }
 

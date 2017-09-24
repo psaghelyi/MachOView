@@ -133,7 +133,10 @@ const uint32_t strings_size)
 		if(swapped)
 		    swap_segment_command(&sg, host_byte_sex);
 		p = (char *)lc + sizeof(struct segment_command);
-		for(j = 0 ; j < sg.nsects ; j++){
+		for(j = 0 ; j < sg.nsects &&
+			    j * sizeof(struct section) +
+			    sizeof(struct segment_command) < sizeofcmds ;
+                    j++){
 		    memcpy((char *)&s, p, sizeof(struct section));
 		    p += sizeof(struct section);
 		    if(swapped)
@@ -170,7 +173,10 @@ const uint32_t strings_size)
 		if(swapped)
 		    swap_segment_command_64(&sg64, host_byte_sex);
 		p = (char *)lc + sizeof(struct segment_command_64);
-		for(j = 0 ; j < sg64.nsects ; j++){
+		for(j = 0 ; j < sg64.nsects &&
+			    j * sizeof(struct section_64) +
+			    sizeof(struct segment_command_64) < sizeofcmds ;
+                    j++){
 		    memcpy((char *)&s64, p, sizeof(struct section_64));
 		    p += sizeof(struct section_64);
 		    if(swapped)

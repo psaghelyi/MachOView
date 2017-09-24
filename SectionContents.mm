@@ -624,7 +624,7 @@ static AsmFootPrint const fastStubHelperHelperARM =
   {
     @synchronized([self class])
     {
-      ot_arm64_dc = create_arm64_llvm_disassembler();
+      ot_arm64_dc = create_arm64_llvm_disassembler(mach_header->cpusubtype);
       NSAssert(ot_arm64_dc, @"can't create arm64 llvm disassembler");
     }
     llvm_disasm_set_options(ot_arm64_dc,  LLVMDisassembler_Option_PrintImmHex);

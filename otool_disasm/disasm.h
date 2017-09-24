@@ -67,10 +67,9 @@ extern "C" {
 
   LLVMDisasmContextRef create_i386_llvm_disassembler(void);
   LLVMDisasmContextRef create_x86_64_llvm_disassembler(void);
-  LLVMDisasmContextRef create_arm64_llvm_disassembler(void);
   LLVMDisasmContextRef create_arm_llvm_disassembler(cpu_subtype_t cpusubtype);
   LLVMDisasmContextRef create_thumb_llvm_disassembler(cpu_subtype_t cpusubtype);
-  LLVMDisasmContextRef create_arm64_llvm_disassembler(void);
+  LLVMDisasmContextRef create_arm64_llvm_disassembler(cpu_subtype_t cpusubtype);
   
   void delete_i386_llvm_disassembler(LLVMDisasmContextRef dc);
   void delete_x86_64_llvm_disassembler(LLVMDisasmContextRef dc);
@@ -117,8 +116,7 @@ extern "C" {
                             struct inst *inst,
                             struct inst *insts,
                             uint32_t ninsts);
-
-   
+  
   uint32_t arm_disassemble(
                            char *sect,
                            uint32_t left,

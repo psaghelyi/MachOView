@@ -10,6 +10,7 @@
 #import "DataSources.h"
 #import "DataController.h"
 #import "Document.h"
+#import "Layout.h"
 
 NSString * const MVScannerErrorMessage  = @"NSScanner error";
 
@@ -127,8 +128,8 @@ NSString * const MVScannerErrorMessage  = @"NSScanner error";
       NSString * cellContent = [NSString stringWithFormat:@"%.8lX", offset];
       if ([document isRVA] == YES)
       {
-        id layout = [selectedNode.userInfo objectForKey:MVLayoutUserInfoKey];
-        return [layout performSelector:@selector(convertToRVA:) withObject:cellContent];
+        MVLayout *layout = [selectedNode.userInfo objectForKey:MVLayoutUserInfoKey];
+        return [layout convertToRVA:cellContent];
       }
       return cellContent;
     }
@@ -183,8 +184,8 @@ NSString * const MVScannerErrorMessage  = @"NSScanner error";
     {
       if ([document isRVA] == YES)
       {
-        id layout = [selectedNode.userInfo objectForKey:MVLayoutUserInfoKey];
-        cellContent = [layout performSelector:@selector(convertToRVA:) withObject:cellContent];
+        MVLayout *layout = [selectedNode.userInfo objectForKey:MVLayoutUserInfoKey];
+        cellContent = [layout convertToRVA:cellContent];
       }
     }
       
